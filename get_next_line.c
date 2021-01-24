@@ -6,107 +6,92 @@
 /*   By: cquickbe <cquickbe@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/11 19:06:41 by cquickbe          #+#    #+#             */
-/*   Updated: 2021/01/06 10:38:32 by cquickbe         ###   ########.fr       */
+/*   Updated: 2021/01/24 14:12:34 by cquickbe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-char	*ft_strjoin(char const *s1, char const *s2)
+static int	ft_return(char *buf)
 {
-	char	*str;
-	int		i;
-	int		j;
-
-	if (!s1 || !s2)
-		return (NULL);
-	if (!(str = (char*)malloc(sizeof(char) * (ft_strlen(s1) +
-									ft_strlen(s2) + 1))))
-		return (NULL);
-	i = 0;
-	j = 0;
-	while (s1[i] != '\0')
-	{
-		str[i] = s1[i];
-		i++;
-	}
-	while (s2[j] != '\0')
-	{
-		str[i] = s2[j];
-		i++;
-		j++;
-	}
-	str[i] = '\0';
-	free((char*)s1);
-	return (str);
+	if (buf)
+		free(buf);
+	return (-1);
 }
 
-char	*ft_strdup(const char *src)
+int			ft_return_buf(char *n_p, char *buf)
 {
-	char *dst;
-
-	if (!(dst = (char*)malloc(sizeof(char) * (ft_strlen(src) + 1))))
-		return (NULL);
-	ft_strlcpy(dst, (char*)src, ft_strlen(src) + 1);
-	return (dst);
+	free(buf);
+	if (n_p != NULL)
+		return (1);
+	else
+		return (0);
 }
 
-char	*rem_variable(char **line, char *rem)
+static char	*ft_do_gnl(char *line, char *buf)
 {
-	char *newline_pointer;
+	char *lks;
 
-	newline_pointer = NULL;
-	if (rem)
-		if ((newline_pointer = ft_strchr(rem, '\n')))
+	lks = line;
+	if (!(line = ft_strjoin(line, buf)))
+		return (NULL);
+	free(lks);
+	return (line);
+}
+
+static char	*ft_rem_var(char **rem, char **line)
+{
+	char *n_p;
+	char *lks;
+
+	n_p = NULL;
+	if (*rem)
+	{
+		if ((n_p = ft_strchr(*rem, '\n')))
 		{
-			*newline_pointer = '\0';
-			*line = ft_strdup(rem);
-			ft_strcpy(rem, ++newline_pointer);
+			*n_p = '\0';
+			*line = ft_strdup(*rem);
+			lks = *rem;
+			*rem = ft_strdup(++n_p);
+			free(lks);
 		}
 		else
 		{
-			*line = ft_strdup(rem);
-			if (rem)
-				while (*rem)
-					*rem++ = '\0';
+			*line = ft_strdup(*rem);
+			free(*rem);
+			*rem = NULL;
 		}
+	}
 	else
-		*line = ft_strnew(1);
-	return (newline_pointer);
+		*line = ft_strdup("");
+	return (n_p);
 }
 
-void	do_gnl(char **tmp, char **rem, char **newline_p)
+int			get_next_line(int fd, char **line)
 {
-	*tmp = *rem;
-	**newline_p = '\0';
-	*rem = ft_strdup(++*newline_p);
-	free(*tmp);
-}
+	char		*buf;
+	char		*n_p;
+	int			b_read;
+	static char	*rem = NULL;
 
-int		get_next_line(int fd, char **line)
-{
-	int				bytes_read;
-	char			*buf;
-	char			*newline_p;
-	char			*tmp;
-	static char		*rem = NULL;
-
-	if (!line || fd < 0 || BUFFER_SIZE <= 0 ||
-	(!(buf = (char*)malloc(sizeof(char) * (BUFFER_SIZE + 1)))))
-		return (-1);
-	if (read(fd, buf, 0) == -1)
+	buf = NULL;
+	if (!line || fd < 0 || BUFFER_SIZE <= 0 || !(buf = malloc(BUFFER_SIZE + 1))
+	|| (read(fd, buf, 0) < 0))
+		return (ft_return(buf));
+	n_p = ft_rem_var(&rem, line);
+	while (!n_p && (b_read = read(fd, buf, BUFFER_SIZE)))
 	{
-		free(buf);
-		return (-1);
+		if (b_read == -1)
+			return (ft_return(buf));
+		buf[b_read] = '\0';
+		if ((n_p = ft_strchr(buf, '\n')))
+		{
+			*n_p = '\0';
+			if (!(rem = ft_strdup(++n_p)))
+				return (ft_return(buf));
+		}
+		if (!(*line = ft_do_gnl(*line, buf)))
+			return (ft_return(buf));
 	}
-	newline_p = rem_variable(line, rem);
-	while (!newline_p && (bytes_read = read(fd, buf, BUFFER_SIZE)))
-	{
-		buf[bytes_read] = '\0';
-		if ((newline_p = ft_strchr(buf, '\n')))
-			do_gnl(&tmp, &rem, &newline_p);
-		*line = ft_strjoin(*line, buf);
-	}
-	free(buf);
-	return (newline_p ? 1 : 0);
+	return (ft_return_buf(n_p, buf));
 }

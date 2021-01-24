@@ -6,7 +6,7 @@
 /*   By: cquickbe <cquickbe@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/26 19:13:51 by cquickbe          #+#    #+#             */
-/*   Updated: 2021/01/06 10:38:35 by cquickbe         ###   ########.fr       */
+/*   Updated: 2021/01/24 12:56:28 by cquickbe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,11 +16,15 @@
 # include <stdlib.h>
 # include <unistd.h>
 
-char	*ft_strnew(size_t size);
+# ifndef BUFFER_SIZE
+#  define BUFFER_SIZE 16
+# endif
+
+char	*ft_strjoin(char const *s1, char const *s2);
 size_t	ft_strlen(const char *str);
 size_t	ft_strlcpy(char *dst, char *src, size_t size);
 char	*ft_strchr(const char *str, int c);
-char	*ft_strcpy(char *dst, char *src);
+char	*ft_strdup(const char *src);
 int		get_next_line(int fd, char **line);
 
 #endif
